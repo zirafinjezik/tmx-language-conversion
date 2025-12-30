@@ -38,9 +38,8 @@ This repo demonstrates:
 ---
 
 ## 🛠 Tools Used
-- Notepad++  
-- Regex for batch replacement  
-- Python  
+- Python — for automated language‑code conversion  
+- Manual XML editing — for demonstrating the before/after TMX structure  
 
 ---
 
