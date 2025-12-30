@@ -1,0 +1,48 @@
+# TMX Language Conversion (en-US → en-UK)
+
+This repository demonstrates how to modify TMX (Translation Memory eXchange) files by changing the source language code from **en-US** to **en-UK**.  
+It showcases practical localization engineering skills, bilingual file handling, and QA validation for translation assets.
+
+---
+
+## 📁 Repository Structure
+
+### 📂 sample_tmx
+Contains:
+- `original_en-US.tmx` — TMX with en-US as the source language  
+- `converted_en-UK.tmx` — file with the source language updated to en-UK  
+
+### 📂 documentation
+Contains:
+- Explanation of TMX structure  
+- Steps used to safely modify the language code  
+- Notes on QA checks (validation, encoding, tag integrity)
+
+---
+
+## 🧪 Why This Matters
+
+Changing locale codes is a common task in:
+- localization engineering  
+- translation memory cleanup  
+- QA validation  
+- preparing bilingual files for CAT tools  
+- ensuring consistency across projects  
+
+This repo demonstrates:
+- XML awareness  
+- understanding of TMX structure  
+- attention to detail  
+- practical localization engineering skills  
+
+---
+
+## 🛠 Tools Used
+- Notepad++  
+- Regex for batch replacement  
+- Python  
+
+---
+
+## 📫 Contact
+If you'd like to see more localization engineering examples, feel free to reach out.
