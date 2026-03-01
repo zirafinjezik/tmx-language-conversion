@@ -5,14 +5,14 @@ It showcases practical localization engineering skills, bilingual file handling,
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
-### 📂 sample_tmx
+### sample_tmx
 Contains:
 - `original_en-US.tmx` — TMX with en-US as the source language  
 - `converted_en-UK.tmx` — file with the source language updated to en-UK  
 
-### 📂 documentation
+### documentation
 Contains:
 - Explanation of TMX structure  
 - Steps used to safely modify the language code  
@@ -20,28 +20,12 @@ Contains:
 
 ---
 
-## 🧪 Why This Matters
+## Why This Matters
 
-Changing locale codes is a common task in:
-- localization engineering  
-- translation memory cleanup  
-- QA validation  
-- preparing bilingual files for CAT tools  
-- ensuring consistency across projects  
-
-This repo demonstrates:
-- XML awareness  
-- understanding of TMX structure  
-- attention to detail  
-- practical localization engineering skills  
+Changing locale codes in TMX files is a routine localization engineering task. This repo demonstrates XML-aware file manipulation using Python. 
 
 ---
 
-## 🛠 Tools Used
+## Tools Used
 - Python — for automated language‑code conversion  
 - Manual XML editing — for demonstrating the before/after TMX structure  
-
----
-
-## 📫 Contact
-If you'd like to see more localization engineering examples, feel free to reach out.
