@@ -2,54 +2,68 @@
 
 Change the source language code in a TMX (Translation Memory eXchange) file, for example `en-US` to `en-GB`, across the header and every translation variant in one pass. For localization engineers and PMs who need to realign a translation memory to a different locale variant so their CAT tool will match against it.
 
-Two ways to use it:
-
-- **Browser tool** – drop a TMX in, see the locales it contains, pick a new source code, download the corrected file. Runs entirely client-side; the file never leaves your machine.
-- **Python CLI** (`scripts/convert_language_code.py`) – the same conversion for scripted and batch jobs, with no dependencies.
-
+**Live tool:** [tmx-language-conversion.vercel.app](https://tmx-language-conversion.vercel.app/)
 **Repository:** [github.com/zirafinjezik/tmx-language-conversion](https://github.com/zirafinjezik/tmx-language-conversion)
 
----
+Two ways to use it:
 
-## What It Does
+- **Browser tool** ([live](https://tmx-language-conversion.vercel.app/)) for one-off conversions. Drop a TMX in, check the locales it contains, pick a new source code, download the corrected file.
+- **Python CLI** (`scripts/convert_language_code.py`) for scripted and batch jobs, with no dependencies.
 
-- Replaces language codes in `xml:lang`, `srclang`, and `adminlang` attributes throughout the TMX file
-- Handles SDL-generated TMX files (SDL Language Platform / Trados Studio format)
-- Reads and writes UTF-8 encoded files, preserving all content and structure
-- Outputs a new file without modifying the original
-
-Default conversion: **en-US → en-GB**
-The target pair is configurable by editing the `replacements` dictionary in the script.
+Both change only the `srclang`, `adminlang`, and matching `xml:lang` attributes. Everything else, including formatting, whitespace, and entities, stays byte-for-byte identical to the source, which is what a CAT tool expects from a TM file.
 
 ---
 
-## Browser Tool
+## Screenshot
 
-Open `index.html` in any browser, or use the deployed version. Drop in a TMX file and the tool reads its header source language, lists every locale it contains, and counts the translation units. Pick a from/to code (common locales are suggested, or type any BCP-47 tag), convert, and download.
-
-The conversion changes only the `srclang`, `adminlang`, and matching `xml:lang` attributes. Everything else, including formatting, whitespace, and entities, stays byte-for-byte identical to the source, which is what a CAT tool expects from a TM file. Nothing is uploaded; parsing and rewriting both happen in the browser.
-
----
-
-## Use Cases
-
-**Locale variant realignment**
-A client switches their source locale from `en-US` to `en-GB` mid-project. All existing TMs need to be updated so that Trados Studio or memoQ can match against the correct source language. Running this script converts the entire TM file in seconds rather than manually editing XML.
-
-**TM migration between regions**
-A localization PM receives a TM from a US-based team and needs to integrate it into a UK-based workflow. The language code mismatch would prevent CAT tool matching – this script resolves it before import.
-
-**Localization engineering pipeline**
-A localization engineer building a file processing pipeline uses this script as a preprocessing step to normalise language codes before batch import into a TMS.
-
-**QA validation example**
-The included sample files (original and converted) demonstrate the before/after structure, making this repo useful as a reference for anyone learning TMX file manipulation or XML-aware string processing in Python.
+<!-- Drag a screenshot of the live tool into the GitHub editor on this line. GitHub uploads it and inserts an <img> tag automatically, the same as in lqa_game. -->
 
 ---
 
 ## Why This Exists
 
-CAT tools like Trados Studio and memoQ are strict about language code matching. A TM created with `en-US` as the source will not match against projects set to `en-GB`, even if the content is identical. Manually editing large TMX files in a text editor is error-prone and time-consuming. This script automates the conversion safely and repeatably.
+CAT tools like Trados Studio and memoQ match a TM against a project by language code. A TM created with `en-US` as the source will not match a project set to `en-GB`, even when the content is identical. So when a client switches source locale mid-project, or a US team hands a TM to a UK workflow, every TM has to be realigned before import. Editing large TMX files by hand is slow and easy to get wrong. This does it in one pass.
+
+---
+
+## Browser Tool
+
+Open [the live tool](https://tmx-language-conversion.vercel.app/) (or `index.html` locally). Drop in a TMX file and it reads the header source language, lists every locale present, and counts the translation units. Pick a from/to code (common locales are suggested, or type any BCP-47 tag), convert, and download.
+
+The file is parsed and rewritten entirely in your browser. Nothing is uploaded, and there is no server. The tool reads the file with the browser's XML parser to detect its locales and flag malformed XML, then applies the code change with targeted replacement so the output differs from the source only in the codes.
+
+---
+
+## Python CLI
+
+**Requirements:** Python 3.x, no external dependencies.
+
+```bash
+git clone https://github.com/zirafinjezik/tmx-language-conversion.git
+cd tmx-language-conversion
+python scripts/convert_language_code.py
+```
+
+Output is saved to `sample_tmx/converted_en-GB_python.tmx` by default.
+
+To convert your own file, edit the paths in the script:
+
+```python
+input_file  = "path/to/your/input.tmx"
+output_file = "path/to/your/output.tmx"
+```
+
+To use a different pair, edit the `replacements` dictionary:
+
+```python
+replacements = {
+    'xml:lang="en-GB"': 'xml:lang="en-AU"',
+    'srclang="en-GB"':  'srclang="en-AU"',
+    'adminlang="en-GB"': 'adminlang="en-AU"',
+}
+```
+
+This covers every place the source code appears in a standard TMX file: the `<header>` metadata and all `<tuv>` translation variant elements.
 
 ---
 
@@ -70,53 +84,6 @@ tmx-language-conversion/
 
 ---
 
-## How It Works
-
-The script performs targeted string replacements on three TMX attributes:
-
-```python
-replacements = {
-    'xml:lang="en-US"': 'xml:lang="en-GB"',
-    'srclang="en-US"':  'srclang="en-GB"',
-    'adminlang="en-US"': 'adminlang="en-GB"',
-}
-```
-
-This covers all locations where the source language code appears in a standard TMX file: the `<header>` metadata and all `<tuv>` translation variant elements.
-
----
-
-## Getting Started
-
-**Requirements:** Python 3.x, no external dependencies.
-
-```bash
-git clone https://github.com/zirafinjezik/tmx-language-conversion.git
-cd tmx-language-conversion
-python scripts/convert_language_code.py
-```
-
-Output is saved to `sample_tmx/converted_en-GB_python.tmx` by default.
-
-**To convert your own file**, edit the paths in the script:
-
-```python
-input_file  = "path/to/your/input.tmx"
-output_file = "path/to/your/output.tmx"
-```
-
-**To use a different language pair**, edit the `replacements` dictionary:
-
-```python
-replacements = {
-    'xml:lang="en-GB"': 'xml:lang="en-AU"',
-    'srclang="en-GB"':  'srclang="en-AU"',
-    'adminlang="en-GB"': 'adminlang="en-AU"',
-}
-```
-
----
-
 ## TMX Structure Reference
 
 TMX is an XML-based standard for exchanging translation memory data. A TMX file contains:
@@ -125,23 +92,23 @@ TMX is an XML-based standard for exchanging translation memory data. A TMX file 
 |---|---|
 | `<header>` | File metadata including `srclang` and `adminlang` |
 | `<body>` | Container for all translation units |
-| `<tu>` | A single translation unit (one source + one or more targets) |
+| `<tu>` | A single translation unit (one source plus one or more targets) |
 | `<tuv>` | A translation variant, identified by `xml:lang` |
-| `<seg>` | The actual translated text segment |
+| `<seg>` | The translated text segment |
 
 ---
 
 ## Limitations
 
-- Uses string replacement rather than XML parsing – robust for standard TMX files but not recommended for files with non-standard attribute formatting or unusual whitespace around attributes
-- Does not validate the output against the TMX 1.4 schema
-- Designed and tested for SDL Language Platform / Trados Studio TMX format
+- The **CLI** uses plain string replacement. It is reliable for standard TMX files but assumes conventional attribute formatting (no unusual whitespace around `=`). The **browser tool** parses the file first, so it also validates well-formedness and reports the locales it finds.
+- Neither validates output against the TMX 1.4 schema.
+- Built and tested against SDL Language Platform / Trados Studio TMX output.
 
 ---
 
 ## Author
 
-**Natalija Marić** – Localization Engineer and LQA specialist with 14+ years of experience in game localization, technical translation, and quality assurance.
+**Natalija Marić**, localization engineer and LQA specialist with 14+ years in game localization, technical translation, and quality assurance.
 
 - 🦒 [Žirafin jezik j.d.o.o.](https://zirafinjezik.hr)
 - 💼 [LinkedIn](https://www.linkedin.com/in/natalija-maric-zirafinjezik)
