@@ -1,6 +1,11 @@
 # TMX Language Conversion
 
-A Python utility for modifying language codes in TMX (Translation Memory eXchange) files. Converts source language codes across the TMX header and all translation variant elements in a single pass – useful for localization engineers and PMs who need to realign translation memory files to a different locale variant.
+Change the source language code in a TMX (Translation Memory eXchange) file, for example `en-US` to `en-GB`, across the header and every translation variant in one pass. For localization engineers and PMs who need to realign a translation memory to a different locale variant so their CAT tool will match against it.
+
+Two ways to use it:
+
+- **Browser tool** – drop a TMX in, see the locales it contains, pick a new source code, download the corrected file. Runs entirely client-side; the file never leaves your machine.
+- **Python CLI** (`scripts/convert_language_code.py`) – the same conversion for scripted and batch jobs, with no dependencies.
 
 **Repository:** [github.com/zirafinjezik/tmx-language-conversion](https://github.com/zirafinjezik/tmx-language-conversion)
 
@@ -15,6 +20,14 @@ A Python utility for modifying language codes in TMX (Translation Memory eXchang
 
 Default conversion: **en-US → en-GB**
 The target pair is configurable by editing the `replacements` dictionary in the script.
+
+---
+
+## Browser Tool
+
+Open `index.html` in any browser, or use the deployed version. Drop in a TMX file and the tool reads its header source language, lists every locale it contains, and counts the translation units. Pick a from/to code (common locales are suggested, or type any BCP-47 tag), convert, and download.
+
+The conversion changes only the `srclang`, `adminlang`, and matching `xml:lang` attributes. Everything else, including formatting, whitespace, and entities, stays byte-for-byte identical to the source, which is what a CAT tool expects from a TM file. Nothing is uploaded; parsing and rewriting both happen in the browser.
 
 ---
 
@@ -44,13 +57,14 @@ CAT tools like Trados Studio and memoQ are strict about language code matching. 
 
 ```
 tmx-language-conversion/
+├── index.html                     # Browser tool (no build, no dependencies)
 ├── scripts/
-│   └── convert_language_code.py   # Main conversion script
+│   └── convert_language_code.py   # Python CLI for batch jobs
 ├── sample_tmx/
 │   ├── original_en-US.tmx         # Sample TMX with en-US source language
 │   └── converted_en-GB.tmx        # Converted output with en-GB source language
 ├── documentation/
-│   └── README.md                  # TMX structure reference
+│   └── README_tmx_explained.md    # TMX structure reference
 └── README.md
 ```
 
