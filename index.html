@@ -214,20 +214,24 @@
 </div>
 
 <datalist id="locales">
-  <option value="en-US"></option><option value="en-GB"></option><option value="en-AU"></option>
-  <option value="en-CA"></option><option value="en-IE"></option><option value="en-NZ"></option>
-  <option value="de-DE"></option><option value="de-AT"></option><option value="de-CH"></option>
-  <option value="fr-FR"></option><option value="fr-CA"></option><option value="fr-BE"></option><option value="fr-CH"></option>
-  <option value="es-ES"></option><option value="es-MX"></option><option value="es-419"></option><option value="es-AR"></option>
-  <option value="pt-PT"></option><option value="pt-BR"></option>
-  <option value="it-IT"></option><option value="nl-NL"></option><option value="nl-BE"></option>
-  <option value="pl-PL"></option><option value="cs-CZ"></option><option value="sk-SK"></option><option value="hu-HU"></option>
-  <option value="ro-RO"></option><option value="bg-BG"></option><option value="el-GR"></option>
-  <option value="hr-HR"></option><option value="sr-Latn-RS"></option><option value="sr-Cyrl-RS"></option><option value="sl-SI"></option>
-  <option value="ru-RU"></option><option value="uk-UA"></option><option value="tr-TR"></option>
-  <option value="sv-SE"></option><option value="da-DK"></option><option value="nb-NO"></option><option value="nn-NO"></option><option value="fi-FI"></option>
-  <option value="ja-JP"></option><option value="ko-KR"></option><option value="zh-CN"></option><option value="zh-TW"></option><option value="zh-Hans"></option><option value="zh-Hant"></option>
-  <option value="ar-SA"></option><option value="he-IL"></option><option value="th-TH"></option><option value="vi-VN"></option><option value="id-ID"></option>
+  <option value="ar-SA"></option><option value="bg-BG"></option><option value="cs-CZ"></option>
+  <option value="da-DK"></option><option value="de-AT"></option><option value="de-CH"></option>
+  <option value="de-DE"></option><option value="el-GR"></option><option value="en-AU"></option>
+  <option value="en-CA"></option><option value="en-GB"></option><option value="en-IE"></option>
+  <option value="en-NZ"></option><option value="en-US"></option><option value="es-419"></option>
+  <option value="es-AR"></option><option value="es-ES"></option><option value="es-MX"></option>
+  <option value="fi-FI"></option><option value="fr-BE"></option><option value="fr-CA"></option>
+  <option value="fr-CH"></option><option value="fr-FR"></option><option value="he-IL"></option>
+  <option value="hr-HR"></option><option value="hu-HU"></option><option value="id-ID"></option>
+  <option value="it-IT"></option><option value="ja-JP"></option><option value="ko-KR"></option>
+  <option value="nb-NO"></option><option value="nl-BE"></option><option value="nl-NL"></option>
+  <option value="nn-NO"></option><option value="pl-PL"></option><option value="pt-BR"></option>
+  <option value="pt-PT"></option><option value="ro-RO"></option><option value="ru-RU"></option>
+  <option value="sk-SK"></option><option value="sl-SI"></option><option value="sr-Cyrl-RS"></option>
+  <option value="sr-Latn-RS"></option><option value="sv-SE"></option><option value="th-TH"></option>
+  <option value="tr-TR"></option><option value="uk-UA"></option><option value="vi-VN"></option>
+  <option value="zh-CN"></option><option value="zh-Hans"></option><option value="zh-Hant"></option>
+  <option value="zh-TW"></option>
 </datalist>
 
 <script>
@@ -303,7 +307,7 @@
         : '<span style="color:var(--muted)">none declared in header</span>';
 
       if (info.langs.length){
-        $("rLangs").innerHTML = info.langs.map(function(l){
+        $("rLangs").innerHTML = info.langs.slice().sort(function(a,b){ return a.localeCompare(b); }).map(function(l){
           var cls = (l === info.src) ? "tag src" : "tag";
           return '<span class="' + cls + '">' + l + '</span>';
         }).join("");
