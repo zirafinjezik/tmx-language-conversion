@@ -13,7 +13,7 @@ A Python utility for modifying language codes in TMX (Translation Memory eXchang
 - Reads and writes UTF-8 encoded files, preserving all content and structure
 - Outputs a new file without modifying the original
 
-Default conversion: **en-US → en-UK**
+Default conversion: **en-US → en-GB**
 The target pair is configurable by editing the `replacements` dictionary in the script.
 
 ---
@@ -21,7 +21,7 @@ The target pair is configurable by editing the `replacements` dictionary in the 
 ## Use Cases
 
 **Locale variant realignment**
-A client switches their source locale from `en-US` to `en-UK` mid-project. All existing TMs need to be updated so that Trados Studio or memoQ can match against the correct source language. Running this script converts the entire TM file in seconds rather than manually editing XML.
+A client switches their source locale from `en-US` to `en-GB` mid-project. All existing TMs need to be updated so that Trados Studio or memoQ can match against the correct source language. Running this script converts the entire TM file in seconds rather than manually editing XML.
 
 **TM migration between regions**
 A localization PM receives a TM from a US-based team and needs to integrate it into a UK-based workflow. The language code mismatch would prevent CAT tool matching – this script resolves it before import.
@@ -36,7 +36,7 @@ The included sample files (original and converted) demonstrate the before/after 
 
 ## Why This Exists
 
-CAT tools like Trados Studio and memoQ are strict about language code matching. A TM created with `en-US` as the source will not match against projects set to `en-UK`, even if the content is identical. Manually editing large TMX files in a text editor is error-prone and time-consuming. This script automates the conversion safely and repeatably.
+CAT tools like Trados Studio and memoQ are strict about language code matching. A TM created with `en-US` as the source will not match against projects set to `en-GB`, even if the content is identical. Manually editing large TMX files in a text editor is error-prone and time-consuming. This script automates the conversion safely and repeatably.
 
 ---
 
@@ -48,7 +48,7 @@ tmx-language-conversion/
 │   └── convert_language_code.py   # Main conversion script
 ├── sample_tmx/
 │   ├── original_en-US.tmx         # Sample TMX with en-US source language
-│   └── converted_en-UK.tmx        # Converted output with en-UK source language
+│   └── converted_en-GB.tmx        # Converted output with en-GB source language
 ├── documentation/
 │   └── README.md                  # TMX structure reference
 └── README.md
@@ -62,9 +62,9 @@ The script performs targeted string replacements on three TMX attributes:
 
 ```python
 replacements = {
-    'xml:lang="en-US"': 'xml:lang="en-UK"',
-    'srclang="en-US"':  'srclang="en-UK"',
-    'adminlang="en-US"': 'adminlang="en-UK"',
+    'xml:lang="en-US"': 'xml:lang="en-GB"',
+    'srclang="en-US"':  'srclang="en-GB"',
+    'adminlang="en-US"': 'adminlang="en-GB"',
 }
 ```
 
@@ -82,7 +82,7 @@ cd tmx-language-conversion
 python scripts/convert_language_code.py
 ```
 
-Output is saved to `sample_tmx/converted_en-UK_python.tmx` by default.
+Output is saved to `sample_tmx/converted_en-GB_python.tmx` by default.
 
 **To convert your own file**, edit the paths in the script:
 
