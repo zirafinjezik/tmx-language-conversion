@@ -16,7 +16,7 @@ Both change only the `srclang`, `adminlang`, and matching `xml:lang` attributes.
 
 ## Screenshot
 
-<!-- Drag a screenshot of the live tool into the GitHub editor on this line. GitHub uploads it and inserts an <img> tag automatically, the same as in lqa_game. -->
+![TMX Language Converter](screenshot.png)
 
 ---
 
