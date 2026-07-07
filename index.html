@@ -95,6 +95,20 @@
   .tag{display:inline-block;background:var(--teal-tint);color:var(--teal-deep);border-radius:6px;padding:1px 7px;margin:0 4px 4px 0;font-size:12.5px}
   .tag.src{background:var(--teal);color:#fff}
 
+  .health{
+    background:#fbfdfc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px;
+  }
+  .health .lab{margin-bottom:8px}
+  .health .hrow{
+    display:flex;justify-content:space-between;gap:12px;padding:4px 0;
+    font-family:"IBM Plex Mono",monospace;font-size:13px;
+  }
+  .health .hrow + .hrow{border-top:1px solid var(--line)}
+  .health .hkey{color:var(--muted)}
+  .health .hval{text-align:right}
+  .health .flag{color:var(--amber);font-weight:600}
+  .health .ok{color:var(--teal-deep)}
+
   .warn{
     margin:14px 0 0;padding:10px 13px;border-radius:9px;font-size:13.5px;
     background:#fdf6ec;border:1px solid #f0d9b5;color:var(--amber);
@@ -175,6 +189,10 @@
         <dt>Languages</dt><dd id="rLangs"></dd>
         <dt>Units</dt><dd id="rUnits"></dd>
       </dl>
+      <div id="health" class="health hidden">
+        <span class="lab">TM health</span>
+        <div id="healthRows"></div>
+      </div>
       <div id="parseWarn" class="warn err hidden"></div>
 
       <div class="controls">
@@ -246,6 +264,7 @@
   var drop = $("drop"), fileInput = $("file"), loaded = $("loaded");
 
   function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
   // Targeted rewrite: only srclang / adminlang / xml:lang whose value equals `from`.
   // Operates on raw text so output differs from source only in those codes.
@@ -274,12 +293,43 @@
       info.adminlang = header.getAttribute("adminlang");
     }
     var seen = {};
+    var perLang = {};
+    var emptySegs = 0;
     var tuvs = doc.getElementsByTagName("tuv");
     for (var i=0;i<tuvs.length;i++){
       var lang = tuvs[i].getAttribute("xml:lang") || tuvs[i].getAttribute("lang");
-      if (lang && !seen[lang]){ seen[lang] = true; info.langs.push(lang); }
+      if (lang){
+        perLang[lang] = (perLang[lang] || 0) + 1;
+        if (!seen[lang]){ seen[lang] = true; info.langs.push(lang); }
+      }
+      var segEl = tuvs[i].getElementsByTagName("seg")[0];
+      if (segEl && !segEl.textContent.replace(/^\s+|\s+$/g, "")) emptySegs++;
     }
     info.units = doc.getElementsByTagName("tu").length;
+    info.perLang = perLang;
+    info.emptySegs = emptySegs;
+
+    // Duplicate source segments: same source text in more than one TU.
+    var srcSeen = {};
+    var dups = 0;
+    var tus = doc.getElementsByTagName("tu");
+    for (var t=0;t<tus.length;t++){
+      var vars = tus[t].getElementsByTagName("tuv");
+      var pick = null;
+      if (info.src){
+        for (var v=0;v<vars.length;v++){
+          var vl = vars[v].getAttribute("xml:lang") || vars[v].getAttribute("lang");
+          if (vl === info.src){ pick = vars[v]; break; }
+        }
+      }
+      if (!pick && vars.length) pick = vars[0];
+      if (!pick) continue;
+      var sEl = pick.getElementsByTagName("seg")[0];
+      var txt = sEl ? sEl.textContent.replace(/^\s+|\s+$/g, "") : "";
+      if (!txt) continue;
+      if (srcSeen[txt]){ dups++; } else { srcSeen[txt] = true; }
+    }
+    info.dupSources = dups;
     return info;
   }
 
@@ -303,18 +353,33 @@
       var info = detect(raw);
 
       $("rSrc").innerHTML = info.src
-        ? '<span class="tag src">' + info.src + '</span>'
+        ? '<span class="tag src">' + esc(info.src) + '</span>'
         : '<span style="color:var(--muted)">none declared in header</span>';
 
       if (info.langs.length){
         $("rLangs").innerHTML = info.langs.slice().sort(function(a,b){ return a.localeCompare(b); }).map(function(l){
           var cls = (l === info.src) ? "tag src" : "tag";
-          return '<span class="' + cls + '">' + l + '</span>';
+          return '<span class="' + cls + '">' + esc(l) + '</span>';
         }).join("");
       } else {
         $("rLangs").innerHTML = '<span style="color:var(--muted)">none found</span>';
       }
       $("rUnits").textContent = info.units + (info.units === 1 ? " unit" : " units");
+
+      // TM health
+      var rows = "";
+      var langsSorted = info.langs.slice().sort(function(a,b){ return a.localeCompare(b); });
+      langsSorted.forEach(function(l){
+        var n = info.perLang[l] || 0;
+        var missing = info.units - n;
+        var val = n + (n === 1 ? " segment" : " segments");
+        if (missing > 0) val += ' <span class="flag">' + missing + " missing</span>";
+        rows += '<div class="hrow"><span class="hkey">' + esc(l) + '</span><span class="hval">' + val + "</span></div>";
+      });
+      rows += '<div class="hrow"><span class="hkey">Empty segments</span><span class="hval ' + (info.emptySegs ? "flag" : "ok") + '">' + info.emptySegs + "</span></div>";
+      rows += '<div class="hrow"><span class="hkey">Duplicate source segments</span><span class="hval ' + (info.dupSources ? "flag" : "ok") + '">' + info.dupSources + "</span></div>";
+      $("healthRows").innerHTML = rows;
+      if (info.units > 0){ show($("health")); } else { hide($("health")); }
 
       var pw = $("parseWarn");
       if (!info.ok){ pw.textContent = info.error; show(pw); } else { hide(pw); }
