@@ -1,69 +1,474 @@
-"""Unit tests for convert_language_code. Run: python -m unittest scripts.test_convert -v
-(or from scripts/: python -m unittest test_convert)"""
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMX Language Converter</title>
+<meta name="description" content="Change the source language code in a TMX translation memory file. Runs entirely in your browser; nothing is uploaded.">
+<meta property="og:title" content="TMX Language Converter">
+<meta property="og:description" content="Realign the source locale in a TMX file (e.g. en-US to en-GB) without editing XML by hand. Client-side, no upload.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d7d6e'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='%23eef2f0' text-anchor='middle'%3E%26lt;%2F%26gt;%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef2f0;
+    --surface:#ffffff;
+    --ink:#16211d;
+    --muted:#5d6b66;
+    --line:#d3ddd8;
+    --line-strong:#bccabf;
+    --teal:#0d7d6e;
+    --teal-deep:#0a5f54;
+    --teal-tint:#e2f0ec;
+    --amber:#b45309;
+    --red:#b3261e;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(22,33,29,.04), 0 8px 28px rgba(22,33,29,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding:48px 20px 96px;
+  }
+  .wrap{max-width:680px;margin:0 auto}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
 
-import os
-import sys
-import unittest
+  header.intro{margin-bottom:28px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--teal-deep);margin:0 0 12px;
+  }
+  h1{
+    font-family:"Bricolage Grotesque",sans-serif;
+    font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1.04;
+    letter-spacing:-.02em;margin:0 0 12px;
+  }
+  .lede{color:var(--muted);font-size:16px;max-width:52ch;margin:0}
+  .lede strong{color:var(--ink);font-weight:600}
 
-sys.path.insert(0, os.path.dirname(__file__))
-from convert_language_code import convert_language_code
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;margin-top:24px;
+  }
 
-SAMPLE = os.path.join(os.path.dirname(__file__), "..", "sample_tmx", "original_en-US.tmx")
+  /* Drop zone */
+  .drop{
+    border:1.5px dashed var(--line-strong);border-radius:var(--radius);
+    padding:36px 22px;text-align:center;cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    background:#fbfdfc;
+  }
+  .drop:hover,.drop:focus-visible{border-color:var(--teal);background:var(--teal-tint)}
+  .drop.over{border-color:var(--teal);background:var(--teal-tint)}
+  .drop:focus-visible{outline:3px solid rgba(13,125,110,.35);outline-offset:2px}
+  .drop .glyph{
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:22px;
+    color:var(--teal);display:inline-block;margin-bottom:10px;
+    border:1.5px solid var(--teal);border-radius:9px;padding:6px 11px;
+  }
+  .drop p{margin:6px 0 0;color:var(--muted);font-size:15px}
+  .drop p b{color:var(--ink);font-weight:600}
+  .drop small{display:block;margin-top:8px;color:var(--muted);font-size:12.5px}
 
-TINY = (
-    '<?xml version="1.0" encoding="utf-8"?>\n'
-    '<tmx version="1.4"><header srclang="en-US" adminlang="en-US" o-tmf="x"/>\n'
-    "<body>\n"
-    '<tu><tuv xml:lang="en-US"><seg>Hello</seg></tuv>'
-    '<tuv xml:lang="de-DE"><seg>Hallo</seg></tuv></tu>\n'
-    "<tu><tuv xml:lang='en-US'><seg>Bye</seg></tuv>"
-    '<tuv xml:lang="de-DE"><seg>Tschüss</seg></tuv></tu>\n'
-    "</body></tmx>\n"
-)
+  /* File summary */
+  .file-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .file-name{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:14px;word-break:break-all}
+  .file-meta{color:var(--muted);font-size:12.5px;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  .swap-link{background:none;border:none;color:var(--teal-deep);font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+  .swap-link:hover{color:var(--teal)}
 
+  .readout{
+    display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:baseline;
+    background:#fbfdfc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px;
+  }
+  .readout dt{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+  .readout dd{margin:0;font-family:"IBM Plex Mono",monospace;font-size:13.5px}
+  .tag{display:inline-block;background:var(--teal-tint);color:var(--teal-deep);border-radius:6px;padding:1px 7px;margin:0 4px 4px 0;font-size:12.5px}
+  .tag.src{background:var(--teal);color:#fff}
 
-class TestConvert(unittest.TestCase):
-    def test_counts_and_targets_only_matching_values(self):
-        out, count = convert_language_code(TINY, "en-US", "en-GB")
-        # header srclang + adminlang + two tuv xml:lang
-        self.assertEqual(count, 4)
-        self.assertNotIn("en-US", out)
-        self.assertEqual(out.count("en-GB"), 4)
-        # untouched language stays
-        self.assertEqual(out.count("de-DE"), 2)
+  .health{
+    background:#fbfdfc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px;
+  }
+  .health .lab{margin-bottom:8px}
+  .health .hrow{
+    display:flex;justify-content:space-between;gap:12px;padding:4px 0;
+    font-family:"IBM Plex Mono",monospace;font-size:13px;
+  }
+  .health .hrow + .hrow{border-top:1px solid var(--line)}
+  .health .hkey{color:var(--muted)}
+  .health .hval{text-align:right}
+  .health .flag{color:var(--amber);font-weight:600}
+  .health .ok{color:var(--teal-deep)}
 
-    def test_single_quoted_attributes_are_converted(self):
-        out, _ = convert_language_code(TINY, "en-US", "en-GB")
-        self.assertIn("xml:lang='en-GB'", out)
+  .warn{
+    margin:14px 0 0;padding:10px 13px;border-radius:9px;font-size:13.5px;
+    background:#fdf6ec;border:1px solid #f0d9b5;color:var(--amber);
+  }
+  .warn.err{background:#fbeceb;border-color:#f1c4c1;color:var(--red)}
 
-    def test_everything_else_is_byte_identical(self):
-        out, _ = convert_language_code(TINY, "en-US", "en-GB")
-        self.assertEqual(out.replace("en-GB", "en-US"), TINY)
+  /* Conversion controls */
+  .controls{margin-top:18px}
+  .lab{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace;margin-bottom:6px}
+  .pair{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+  .field{flex:1 1 140px;min-width:140px}
+  input[type=text]{
+    width:100%;font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--ink);
+    background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:10px 12px;
+  }
+  input[type=text]:focus{outline:3px solid rgba(13,125,110,.3);outline-offset:1px;border-color:var(--teal)}
+  .arrow{font-family:"IBM Plex Mono",monospace;color:var(--teal);font-size:20px;padding-bottom:10px;user-select:none}
 
-    def test_no_match_returns_zero_and_unchanged_text(self):
-        out, count = convert_language_code(TINY, "fr-FR", "fr-CA")
-        self.assertEqual(count, 0)
-        self.assertEqual(out, TINY)
+  .btn{
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;
+    background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 20px;cursor:pointer;
+    transition:background .15s ease,transform .05s ease;
+  }
+  .btn:hover{background:var(--teal-deep)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{background:var(--line-strong);cursor:not-allowed}
+  .btn:focus-visible{outline:3px solid rgba(13,125,110,.4);outline-offset:2px}
+  .btn.row{margin-top:18px}
+  .btn.ghost{background:transparent;color:var(--teal-deep);border:1px solid var(--line-strong)}
+  .btn.ghost:hover{background:var(--teal-tint);color:var(--teal-deep)}
 
-    def test_code_in_segment_text_is_not_touched(self):
-        doc = '<header srclang="en-US"/><seg>Set locale to en-US in settings.</seg>'
-        out, count = convert_language_code(doc, "en-US", "en-GB")
-        self.assertEqual(count, 1)
-        self.assertIn("Set locale to en-US in settings.", out)
+  /* Result */
+  .result{margin-top:20px;border-top:1px solid var(--line);padding-top:20px}
+  .diff{
+    font-family:"IBM Plex Mono",monospace;font-size:clamp(18px,4.5vw,26px);font-weight:500;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:4px 0 6px;
+  }
+  .diff .from{color:var(--muted);text-decoration:line-through;text-decoration-color:#c9b2b0}
+  .diff .to{color:var(--teal-deep);background:var(--teal-tint);border-radius:7px;padding:2px 9px}
+  .diff .ar{color:var(--line-strong)}
+  .repl-note{color:var(--muted);font-size:13.5px;margin:0 0 16px;font-family:"IBM Plex Mono",monospace}
+  .repl-note b{color:var(--ink)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
 
-    def test_prefix_codes_do_not_partial_match(self):
-        doc = '<tuv xml:lang="en-USX"><seg>x</seg></tuv>'
-        out, count = convert_language_code(doc, "en-US", "en-GB")
-        self.assertEqual(count, 0)
-        self.assertEqual(out, doc)
+  footer{margin-top:40px;color:var(--muted);font-size:13px;text-align:center}
+  footer a{color:var(--teal-deep)}
+  .hidden{display:none !important}
 
-    def test_sample_file_round_trip(self):
-        with open(SAMPLE, encoding="utf-8") as f:
-            content = f.read()
-        out, count = convert_language_code(content, "en-US", "en-GB")
-        self.assertGreater(count, 0)
-        self.assertEqual(out.replace("en-GB", "en-US"), content)
+  @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <p class="eyebrow">TMX &middot; translation memory</p>
+    <h1>TMX Language Converter</h1>
+    <p class="lede">Realign the source locale in a translation memory file, for example <code>en-US</code> to <code>en-GB</code>, so your CAT tool matches against it. Runs entirely in your browser. <strong>The file never leaves your machine.</strong></p>
+  </header>
 
+  <div class="card">
+    <!-- Step 1: file -->
+    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choose a TMX file or drop one here">
+      <span class="glyph">.tmx</span>
+      <p><b>Drop a TMX file here</b> or click to browse</p>
+      <small>Parsed locally with your browser's XML reader. No upload, no server.</small>
+    </div>
+    <input id="file" type="file" accept=".tmx,.xml,text/xml,application/xml" class="hidden">
 
-if __name__ == "__main__":
-    unittest.main()
+    <!-- Step 2: detection + controls -->
+    <div id="loaded" class="hidden">
+      <div class="file-head">
+        <span class="file-name" id="fileName"></span>
+        <span class="file-meta"><span id="fileSize"></span> &middot; <button class="swap-link" id="reset" type="button">use a different file</button></span>
+      </div>
+
+      <dl class="readout">
+        <dt>Source</dt><dd id="rSrc"></dd>
+        <dt>Languages</dt><dd id="rLangs"></dd>
+        <dt>Units</dt><dd id="rUnits"></dd>
+      </dl>
+      <div id="health" class="health hidden">
+        <span class="lab">TM health</span>
+        <div id="healthRows"></div>
+      </div>
+      <div id="parseWarn" class="warn err hidden"></div>
+
+      <div class="controls">
+        <span class="lab">Convert source language</span>
+        <div class="pair">
+          <div class="field">
+            <input type="text" id="from" list="locales" autocomplete="off" spellcheck="false" aria-label="From language code">
+          </div>
+          <span class="arrow" aria-hidden="true">&rarr;</span>
+          <div class="field">
+            <input type="text" id="to" list="locales" autocomplete="off" spellcheck="false" placeholder="en-GB" aria-label="To language code">
+          </div>
+        </div>
+        <button class="btn row" id="convert" type="button">Convert</button>
+        <div id="convWarn" class="warn hidden"></div>
+      </div>
+
+      <!-- Step 3: result -->
+      <div id="result" class="result hidden">
+        <div class="diff">
+          <span class="from" id="dFrom"></span>
+          <span class="ar">&rarr;</span>
+          <span class="to" id="dTo"></span>
+        </div>
+        <p class="repl-note">Changed <b id="rCount"></b> across <code>srclang</code>, <code>adminlang</code> and <code>xml:lang</code>. Everything else is byte-for-byte identical to your source.</p>
+        <div class="actions">
+          <button class="btn" id="download" type="button">Download converted file</button>
+          <button class="btn ghost" id="again" type="button">Convert another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Žirafin jezik &middot; <a href="https://github.com/zirafinjezik/tmx-language-conversion">source on GitHub</a> &middot; a CLI version is in the repo for batch jobs
+  
+    <br>Files are processed entirely in your browser and never uploaded.
+  </footer>
+</div>
+
+<datalist id="locales">
+  <option value="ar-SA"></option><option value="bg-BG"></option><option value="cs-CZ"></option>
+  <option value="da-DK"></option><option value="de-AT"></option><option value="de-CH"></option>
+  <option value="de-DE"></option><option value="el-GR"></option><option value="en-AU"></option>
+  <option value="en-CA"></option><option value="en-GB"></option><option value="en-IE"></option>
+  <option value="en-NZ"></option><option value="en-US"></option><option value="es-419"></option>
+  <option value="es-AR"></option><option value="es-ES"></option><option value="es-MX"></option>
+  <option value="fi-FI"></option><option value="fr-BE"></option><option value="fr-CA"></option>
+  <option value="fr-CH"></option><option value="fr-FR"></option><option value="he-IL"></option>
+  <option value="hr-HR"></option><option value="hu-HU"></option><option value="id-ID"></option>
+  <option value="it-IT"></option><option value="ja-JP"></option><option value="ko-KR"></option>
+  <option value="nb-NO"></option><option value="nl-BE"></option><option value="nl-NL"></option>
+  <option value="nn-NO"></option><option value="pl-PL"></option><option value="pt-BR"></option>
+  <option value="pt-PT"></option><option value="ro-RO"></option><option value="ru-RU"></option>
+  <option value="sk-SK"></option><option value="sl-SI"></option><option value="sr-Cyrl-RS"></option>
+  <option value="sr-Latn-RS"></option><option value="sv-SE"></option><option value="th-TH"></option>
+  <option value="tr-TR"></option><option value="uk-UA"></option><option value="vi-VN"></option>
+  <option value="zh-CN"></option><option value="zh-Hans"></option><option value="zh-Hant"></option>
+  <option value="zh-TW"></option>
+</datalist>
+
+<script>
+(function(){
+  "use strict";
+  var raw = "";          // original file text
+  var fileBase = "tm";   // filename without extension
+  var converted = "";    // last conversion output
+  var outName = "converted.tmx";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var drop = $("drop"), fileInput = $("file"), loaded = $("loaded");
+
+  function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  function esc(s){ return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  // Targeted rewrite: only srclang / adminlang / xml:lang whose value equals `from`.
+  // Operates on raw text so output differs from source only in those codes.
+  function convertText(text, from, to){
+    var attrs = ["srclang", "adminlang", "xml:lang"];
+    var count = 0;
+    var out = text;
+    attrs.forEach(function(attr){
+      var re = new RegExp("(" + escapeRe(attr) + "\\s*=\\s*([\"']))" + escapeRe(from) + "\\2", "g");
+      out = out.replace(re, function(m, lead, q){ count++; return lead + to + q; });
+    });
+    return { text: out, count: count };
+  }
+
+  function detect(text){
+    var info = { ok:true, error:null, src:null, adminlang:null, langs:[], units:0 };
+    var doc;
+    try {
+      doc = new DOMParser().parseFromString(text, "application/xml");
+    } catch(e){ info.ok = false; info.error = "Could not read this file as XML."; return info; }
+    var perr = doc.querySelector("parsererror");
+    if (perr){ info.ok = false; info.error = "This file isn't well-formed XML. You can still convert it, but check the result."; }
+    var header = doc.querySelector("header");
+    if (header){
+      info.src = header.getAttribute("srclang");
+      info.adminlang = header.getAttribute("adminlang");
+    }
+    var seen = {};
+    var perLang = {};
+    var emptySegs = 0;
+    var tuvs = doc.getElementsByTagName("tuv");
+    for (var i=0;i<tuvs.length;i++){
+      var lang = tuvs[i].getAttribute("xml:lang") || tuvs[i].getAttribute("lang");
+      if (lang){
+        perLang[lang] = (perLang[lang] || 0) + 1;
+        if (!seen[lang]){ seen[lang] = true; info.langs.push(lang); }
+      }
+      var segEl = tuvs[i].getElementsByTagName("seg")[0];
+      if (segEl && !segEl.textContent.replace(/^\s+|\s+$/g, "")) emptySegs++;
+    }
+    info.units = doc.getElementsByTagName("tu").length;
+    info.perLang = perLang;
+    info.emptySegs = emptySegs;
+
+    // Duplicate source segments: same source text in more than one TU.
+    var srcSeen = {};
+    var dups = 0;
+    var tus = doc.getElementsByTagName("tu");
+    for (var t=0;t<tus.length;t++){
+      var vars = tus[t].getElementsByTagName("tuv");
+      var pick = null;
+      if (info.src){
+        for (var v=0;v<vars.length;v++){
+          var vl = vars[v].getAttribute("xml:lang") || vars[v].getAttribute("lang");
+          if (vl === info.src){ pick = vars[v]; break; }
+        }
+      }
+      if (!pick && vars.length) pick = vars[0];
+      if (!pick) continue;
+      var sEl = pick.getElementsByTagName("seg")[0];
+      var txt = sEl ? sEl.textContent.replace(/^\s+|\s+$/g, "") : "";
+      if (!txt) continue;
+      if (srcSeen[txt]){ dups++; } else { srcSeen[txt] = true; }
+    }
+    info.dupSources = dups;
+    return info;
+  }
+
+  function fmtSize(bytes){
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
+    return (bytes/(1024*1024)).toFixed(1) + " MB";
+  }
+
+  function show(el){ el.classList.remove("hidden"); }
+  function hide(el){ el.classList.add("hidden"); }
+
+  function loadFile(file){
+    var reader = new FileReader();
+    reader.onload = function(){
+      raw = String(reader.result);
+      fileBase = file.name.replace(/\.(tmx|xml)$/i, "");
+      $("fileName").textContent = file.name;
+      $("fileSize").textContent = fmtSize(file.size);
+
+      var info = detect(raw);
+
+      $("rSrc").innerHTML = info.src
+        ? '<span class="tag src">' + esc(info.src) + '</span>'
+        : '<span style="color:var(--muted)">none declared in header</span>';
+
+      if (info.langs.length){
+        $("rLangs").innerHTML = info.langs.slice().sort(function(a,b){ return a.localeCompare(b); }).map(function(l){
+          var cls = (l === info.src) ? "tag src" : "tag";
+          return '<span class="' + cls + '">' + esc(l) + '</span>';
+        }).join("");
+      } else {
+        $("rLangs").innerHTML = '<span style="color:var(--muted)">none found</span>';
+      }
+      $("rUnits").textContent = info.units + (info.units === 1 ? " unit" : " units");
+
+      // TM health
+      var rows = "";
+      var langsSorted = info.langs.slice().sort(function(a,b){ return a.localeCompare(b); });
+      langsSorted.forEach(function(l){
+        var n = info.perLang[l] || 0;
+        var missing = info.units - n;
+        var val = n + (n === 1 ? " segment" : " segments");
+        if (missing > 0) val += ' <span class="flag">' + missing + " missing</span>";
+        rows += '<div class="hrow"><span class="hkey">' + esc(l) + '</span><span class="hval">' + val + "</span></div>";
+      });
+      rows += '<div class="hrow"><span class="hkey">Empty segments</span><span class="hval ' + (info.emptySegs ? "flag" : "ok") + '">' + info.emptySegs + "</span></div>";
+      rows += '<div class="hrow"><span class="hkey">Duplicate source segments</span><span class="hval ' + (info.dupSources ? "flag" : "ok") + '">' + info.dupSources + "</span></div>";
+      $("healthRows").innerHTML = rows;
+      if (info.units > 0){ show($("health")); } else { hide($("health")); }
+
+      var pw = $("parseWarn");
+      if (!info.ok){ pw.textContent = info.error; show(pw); } else { hide(pw); }
+
+      // Prefill: from = detected source, to = en-GB if source was en-US else blank
+      $("from").value = info.src || (info.langs[0] || "");
+      $("to").value = (info.src === "en-US") ? "en-GB" : "";
+
+      hide($("result"));
+      hide($("convWarn"));
+      hide(drop);
+      show(loaded);
+      $("to").focus();
+    };
+    reader.onerror = function(){ alert("Could not read that file."); };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function reset(){
+    raw = ""; converted = "";
+    fileInput.value = "";
+    hide(loaded);
+    show(drop);
+    drop.focus();
+  }
+
+  function doConvert(){
+    var from = $("from").value.trim();
+    var to = $("to").value.trim();
+    var cw = $("convWarn");
+    cw.className = "warn hidden";
+
+    if (!from || !to){ cw.textContent = "Enter both a from and a to code."; cw.className = "warn"; return; }
+    if (from === to){ cw.textContent = "From and to are the same. Nothing to change."; cw.className = "warn"; return; }
+
+    var res = convertText(raw, from, to);
+    if (res.count === 0){
+      cw.textContent = "No instances of " + from + " found in srclang, adminlang or xml:lang. Check the from code.";
+      cw.className = "warn";
+      hide($("result"));
+      return;
+    }
+
+    converted = res.text;
+    outName = fileBase.replace(new RegExp(escapeRe(from), "g"), to);
+    if (outName === fileBase){ outName = fileBase + "_" + to; }
+    outName += ".tmx";
+
+    $("dFrom").textContent = from;
+    $("dTo").textContent = to;
+    $("rCount").textContent = res.count + (res.count === 1 ? " attribute" : " attributes");
+    show($("result"));
+    $("download").focus();
+  }
+
+  function download(){
+    var blob = new Blob([converted], { type: "application/xml;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = outName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // Wiring
+  drop.addEventListener("click", function(){ fileInput.click(); });
+  drop.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
+  fileInput.addEventListener("change", function(){ if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+  ["dragenter","dragover"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function(e){
+    var f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+
+  $("reset").addEventListener("click", reset);
+  $("again").addEventListener("click", function(){ hide($("result")); $("to").focus(); });
+  $("convert").addEventListener("click", doConvert);
+  $("download").addEventListener("click", download);
+  $("to").addEventListener("keydown", function(e){ if (e.key === "Enter") doConvert(); });
+  $("from").addEventListener("keydown", function(e){ if (e.key === "Enter") $("to").focus(); });
+})();
+</script>
+</body>
+</html>
