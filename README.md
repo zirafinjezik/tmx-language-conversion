@@ -62,12 +62,16 @@ This covers every place the source code appears in a standard TMX file: the `<he
 tmx-language-conversion/
 ├── index.html                     # Browser tool (no build, no dependencies)
 ├── scripts/
-│   └── convert_language_code.py   # Python CLI for batch jobs
+│   ├── convert_language_code.py   # Python CLI for batch jobs
+│   └── test_convert.py            # Unit tests for the CLI (7 tests)
 ├── sample_tmx/
 │   ├── original_en-US.tmx         # Sample TMX with en-US source language
 │   └── converted_en-GB.tmx        # Converted output with en-GB source language
 ├── documentation/
-│   └── README_tmx_explained.md    # TMX structure reference
+│   └── README.md                  # TMX structure reference
+├── screenshot/
+│   └── Screenshot.png             # Browser tool screenshot used in this README
+├── LICENSE
 └── README.md
 ```
 
